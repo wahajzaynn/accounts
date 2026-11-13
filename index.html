@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0e12">
+<title>Ledger – Company Accounts</title>
+<style>
+:root{--bg:#0c0e12;--s:#14171d;--s2:#1b1f27;--b:#262b35;--t:#e9ecf2;--m:#8a92a3;--a:#8aa4ff;--g:#4cd4a0;--r:#ff7a7a;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--t);font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100%}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;gap:2px;overflow-x:auto;background:rgba(20,23,29,.94);backdrop-filter:blur(12px);border-top:1px solid var(--b);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav a{flex:0 0 auto;padding:9px 13px;border-radius:9px;color:var(--m);font-size:13px;cursor:pointer;white-space:nowrap}
+nav a.on{background:var(--s2);color:var(--t)}
+.brand{display:none;padding:6px 12px 18px}
+.brand b{display:block;font-size:16px;letter-spacing:-.01em}
+.brand span{color:var(--m);font-size:12px}
+main{flex:1;min-width:0;width:100%;max-width:1080px;margin:0 auto;padding:18px 16px 96px}
+.hd{display:flex;align-items:center;justify-content:space-between;margin:4px 0 16px;gap:10px}
+h2{font-size:22px;font-weight:650;letter-spacing:-.02em}
+h3{font-size:15px;font-weight:600;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+.card{background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px}
+.l{color:var(--m);font-size:12px;margin-bottom:4px}
+.v{font-size:19px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pos{color:var(--g)}.neg{color:var(--r)}.mut{color:var(--m)}
+.two{display:grid;gap:12px;grid-template-columns:1fr}
+.tw{overflow-x:auto;padding:0}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{text-align:left;color:var(--m);font-weight:500;font-size:12px;padding:11px 12px}
+td{padding:11px 12px;border-top:1px solid var(--b);white-space:nowrap}
+.btn{background:var(--a);color:#0c0e12;border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:var(--s2);color:var(--t);border:1px solid var(--b)}
+.sm{padding:5px 10px;font-size:12px;font-weight:500}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--a);outline-offset:2px}
+label{display:block;color:var(--m);font-size:12px;margin-bottom:12px}
+input,select{display:block;width:100%;margin-top:5px;background:var(--s2);border:1px solid var(--b);color:var(--t);border-radius:10px;padding:10px 12px;font:inherit;font-size:16px}
+.ov{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.62);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--s);border:1px solid var(--b);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:92vh;overflow:auto;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+.row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--b)}
+.li:first-of-type{border-top:0}
+.li small{color:var(--m);display:block}
+svg text{fill:var(--m);font-size:11px}
+@media(min-width:820px){
+ .app{display:flex}
+ nav{position:sticky;top:0;height:100vh;width:216px;flex:0 0 216px;flex-direction:column;border-top:0;border-right:1px solid var(--b);padding:22px 12px;overflow:visible}
+ .brand{display:block}
+ main{padding:28px 32px 48px}
+ .grid{grid-template-columns:repeat(4,1fr)}
+ .two{grid-template-columns:1.6fr 1fr}
+ .ov{align-items:center}.sheet{border-radius:18px}
+}
+@media(prefers-reduced-motion:no-preference){.btn{transition:filter .15s}.btn:hover{filter:brightness(1.1)}}
+</style>
+</head>
+<body>
+<div class="app">
+<nav id="nav" aria-label="Sections"></nav>
+<main id="main"></main>
+</div>
+<div id="ov"></div>
+<script>
+const K='ledger.v1',$=s=>document.querySelector(s);
+const blank=()=>({co:{name:'My Company',cur:'AED',trn:''},stock:[],sales:[],purchases:[],expenses:[],capital:[],payments:[]});
+let db;try{db=JSON.parse(localStorage.getItem(K))}catch(_){}
+db=db||blank();
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(_){}};
+const n=x=>+x||0,uid=()=>Math.random().toString(36).slice(2,9),today=()=>new Date().toISOString().slice(0,10);
+const e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=v=>db.co.cur+' '+n(v).toLocaleString('en',{maximumFractionDigits:2});
+const sum=(a,f)=>a.reduce((s,x)=>s+n(f(x)),0);
+const qtyOf=i=>n(i.open)+sum(db.purchases.filter(p=>p.item==i.id),p=>p.qty)-sum(db.sales.filter(s=>s.item==i.id),s=>s.qty);
+const iname=id=>(db.stock.find(i=>i.id==id)||{name:'(deleted)'}).name;
+const kpi=(l,v,c='')=>`<div class="card"><div class="l">${l}</div><div class="v ${c}">${v}</div></div>`;
+const cats=['Rent','Salaries','Utilities','Marketing','Transport','Supplies','Software','Tax and fees','Other'];
+const mon=()=>new Date().toISOString().slice(0,7);
+const pn=v=>v>=0?'pos':'neg';
+
+const M={
+sales:{t:'Sales',add:'New sale',
+ f:[['date','Date','date'],['party','Customer','text'],['item','Item','item'],['qty','Quantity','number'],['price','Unit price','number'],['paid','Received now (blank = in full)','number','o']],
+ h:['Date','Customer','Item','Qty','Total','Received','Profit'],
+ r:x=>[x.date,x.party,iname(x.item),x.qty,fmt(x.total),fmt(x.paid),fmt(x.total-x.cogs)],
+ mk(v){const i=db.stock.find(s=>s.id==v.item);if(!i)return'Add a stock item first.';if(v.qty>qtyOf(i))return'Only '+qtyOf(i)+' in stock.';const total=v.qty*v.price;return{...v,total,cogs:v.qty*n(i.cost),paid:v.paid===''?total:n(v.paid)}},
+ sum:()=>kpi('Total sales',fmt(sum(db.sales,x=>x.total)))+kpi('Gross profit',fmt(sum(db.sales,x=>x.total-x.cogs)),'pos')},
+purchases:{t:'Purchases',add:'New purchase',
+ f:[['date','Date','date'],['party','Supplier','text'],['item','Item','item'],['qty','Quantity','number'],['price','Unit cost','number'],['paid','Paid now (blank = in full)','number','o']],
+ h:['Date','Supplier','Item','Qty','Total','Paid'],
+ r:x=>[x.date,x.party,iname(x.item),x.qty,fmt(x.total),fmt(x.paid)],
+ mk(v){const i=db.stock.find(s=>s.id==v.item);if(!i)return'Add a stock item first.';const q=qtyOf(i),total=v.qty*v.price;i.cost=(q*n(i.cost)+total)/(q+v.qty);return{...v,total,paid:v.paid===''?total:n(v.paid)}},
+ sum:()=>kpi('Total purchases',fmt(sum(db.purchases,x=>x.total)))+kpi('Unpaid to suppliers',fmt(sum(db.purchases,x=>x.total-x.paid)),'neg')},
+expenses:{t:'Expenses',add:'New expense',
+ f:[['date','Date','date'],['category','Category',cats],['note','Description','text','o'],['amount','Amount','number']],
+ h:['Date','Category','Description','Amount'],
+ r:x=>[x.date,x.category,x.note,fmt(x.amount)],mk:v=>v,
+ sum:()=>kpi('Total expenses',fmt(sum(db.expenses,x=>x.amount)))+kpi('This month',fmt(sum(db.expenses.filter(x=>x.date.startsWith(mon())),x=>x.amount)))},
+stock:{t:'Stock',add:'New item',
+ f:[['name','Item name','text'],['sku','SKU','text','o'],['open','Opening quantity','number'],['cost','Unit cost','number'],['price','Selling price','number'],['min','Low stock alert at','number','o']],
+ h:['Item','SKU','On hand','Cost','Price','Value'],
+ r:x=>[x.name,x.sku,qtyOf(x),fmt(x.cost),fmt(x.price),fmt(qtyOf(x)*n(x.cost))],
+ mk:v=>({...v,open:n(v.open),cost:n(v.cost),price:n(v.price),min:n(v.min)}),
+ sum:()=>kpi('Stock value',fmt(sum(db.stock,i=>qtyOf(i)*n(i.cost))))+kpi('Low stock items',db.stock.filter(i=>qtyOf(i)<=n(i.min)).length,db.stock.some(i=>qtyOf(i)<=n(i.min))?'neg':'')},
+capital:{t:'Capital',add:'New entry',
+ f:[['date','Date','date'],['type','Type',['Investment','Withdrawal']],['party','Owner or partner','text'],['amount','Amount','number']],
+ h:['Date','Type','Owner','Amount'],
+ r:x=>[x.date,x.type,x.party,fmt(x.amount)],mk:v=>v,
+ sum:()=>kpi('Invested',fmt(sum(db.capital.filter(x=>x.type=='Investment'),x=>x.amount)),'pos')+kpi('Withdrawn',fmt(sum(db.capital.filter(x=>x.type=='Withdrawal'),x=>x.amount)))},
+payments:{t:'Payments',add:'New payment',
+ f:[['date','Date','date'],['dir','Direction',['Received','Paid']],['party','Customer or supplier','text'],['method','Method',['Cash','Bank','Card','Cheque']],['amount','Amount','number'],['ref','Reference','text','o']],
+ h:['Date','Direction','Party','Method','Amount','Reference'],
+ r:x=>[x.date,x.dir,x.party,x.method,fmt(x.amount),x.ref],mk:v=>v,
+ sum:()=>kpi('Received',fmt(sum(db.payments.filter(x=>x.dir=='Received'),x=>x.amount)),'pos')+kpi('Paid out',fmt(sum(db.payments.filter(x=>x.dir=='Paid'),x=>x.amount)))}
+};
+const pages=[['dashboard','Dashboard'],['sales','Sales'],['purchases','Purchases'],['expenses','Expenses'],['stock','Stock'],['capital','Capital'],['payments','Payments'],['settings','Settings']];
+
+function calc(){
+ const rev=sum(db.sales,x=>x.total),cogs=sum(db.sales,x=>x.cogs),exp=sum(db.expenses,x=>x.amount);
+ const inv=sum(db.capital.filter(x=>x.type=='Investment'),x=>x.amount),wd=sum(db.capital.filter(x=>x.type=='Withdrawal'),x=>x.amount);
+ const pin=sum(db.payments.filter(x=>x.dir=='Received'),x=>x.amount),pout=sum(db.payments.filter(x=>x.dir=='Paid'),x=>x.amount);
+ const sp=sum(db.sales,x=>x.paid),pp=sum(db.purchases,x=>x.paid),pur=sum(db.purchases,x=>x.total);
+ return{rev,cogs,exp,gp:rev-cogs,np:rev-cogs-exp,cash:inv-wd+sp+pin-pp-pout-exp,ar:rev-sp-pin,ap:pur-pp-pout,cap:inv-wd,sv:sum(db.stock,i=>qtyOf(i)*n(i.cost))};
+}
+function months(){const r=[],d=new Date();for(let i=5;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1),k=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'),f=a=>a.filter(y=>(y.date||'').startsWith(k));
+ r.push({l:x.toLocaleString('en',{month:'short'}),rev:sum(f(db.sales),s=>s.total),cost:sum(f(db.sales),s=>s.cogs)+sum(f(db.expenses),s=>s.amount)})}return r}
+function chart(){const ms=months(),mx=Math.max(1,...ms.flatMap(m=>[m.rev,m.cost]));
+ return `<svg viewBox="0 0 600 190" width="100%" role="img" aria-label="Revenue and costs by month">${ms.map((m,i)=>{const x=i*100+14,h1=m.rev/mx*130,h2=m.cost/mx*130;
+ return `<rect x="${x}" y="${150-h1}" width="34" height="${h1}" rx="5" fill="#8aa4ff"/><rect x="${x+40}" y="${150-h2}" width="34" height="${h2}" rx="5" fill="#3a4152"/><text x="${x+37}" y="172" text-anchor="middle">${m.l}</text>`}).join('')}</svg>
+ <div class="mut" style="font-size:12px"><span style="color:#8aa4ff">&#9632;</span> Revenue &nbsp; <span style="color:#5b647a">&#9632;</span> Costs (cost of goods + expenses)</div>`}
+
+function dash(){
+ const c=calc(),low=db.stock.filter(i=>qtyOf(i)<=n(i.min));
+ const rec=[...db.sales.map(x=>['Sale',x.date,x.party,x.total,1]),...db.purchases.map(x=>['Purchase',x.date,x.party,x.total,0]),...db.expenses.map(x=>['Expense',x.date,x.category,x.amount,0]),
+  ...db.payments.map(x=>['Payment '+x.dir.toLowerCase(),x.date,x.party,x.amount,x.dir=='Received'?1:0]),...db.capital.map(x=>['Capital '+x.type.toLowerCase(),x.date,x.party,x.amount,x.type=='Investment'?1:0])]
+  .sort((a,b)=>b[1].localeCompare(a[1])).slice(0,8);
+ return `<div class="hd"><div><h2>${e(db.co.name)}</h2><div class="mut">Overview of your business</div></div></div>
+ <div class="grid">${kpi('Cash balance',fmt(c.cash),pn(c.cash))}${kpi('Net profit',fmt(c.np),pn(c.np))}${kpi('Revenue',fmt(c.rev))}${kpi('Gross profit',fmt(c.gp),pn(c.gp))}</div>
+ <div class="grid">${kpi('Expenses',fmt(c.exp))}${kpi('Stock value',fmt(c.sv))}${kpi('Customers owe you',fmt(c.ar))}${kpi('You owe suppliers',fmt(c.ap))}</div>
+ <div class="two"><div class="card"><h3>Last 6 months</h3>${chart()}</div>
+ <div class="card"><h3>Recent activity</h3>${rec.map(r=>`<div class="li"><div>${e(r[0])}<small>${e(r[2]||'')} &middot; ${e(r[1])}</small></div><div class="${r[4]?'pos':''}">${r[4]?'+':'-'}${fmt(r[3])}</div></div>`).join('')||'<div class="mut">Nothing yet. Add a stock item, then record a purchase or sale.</div>'}</div></div>
+ ${low.length?`<div class="card" style="margin-top:12px"><h3>Low stock</h3>${low.map(i=>`<div class="li"><div>${e(i.name)}</div><div class="neg">${qtyOf(i)} left</div></div>`).join('')}</div>`:''}
+ <div class="card" style="margin-top:12px"><div class="row" style="justify-content:space-between;align-items:center"><div><div class="l">Owner capital</div><div class="v">${fmt(c.cap)}</div></div><div style="text-align:right"><div class="l">Capital + profit</div><div class="v">${fmt(c.cap+c.np)}</div></div></div></div>`}
+
+function list(k){const m=M[k],rows=[...db[k]].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ return `<div class="hd"><h2>${m.t}</h2><button class="btn" data-add="${k}">Add</button></div><div class="grid">${m.sum()}</div>
+ <div class="card tw"><table><tr>${m.h.map(h=>`<th>${h}</th>`).join('')}<th></th></tr>${rows.map(x=>`<tr>${m.r(x).map(c=>`<td>${e(c)}</td>`).join('')}<td><button class="btn ghost sm" data-del="${x.id}">Delete</button></td></tr>`).join('')||`<tr><td colspan="9" class="mut">No records yet. Tap Add to create the first one.</td></tr>`}</table></div>`}
+
+function sets(){return `<div class="hd"><h2>Settings</h2></div><form id="sf" class="card" style="margin-bottom:12px"><h3>Company</h3>
+ <label>Company name<input name="name" value="${e(db.co.name)}" required></label>
+ <label>Currency<input name="cur" value="${e(db.co.cur)}" maxlength="5" required></label>
+ <label>Tax registration number<input name="trn" value="${e(db.co.trn)}"></label><button class="btn">Save changes</button></form>
+ <div class="card"><h3>Your data</h3><p class="mut" style="margin-bottom:12px">Data is saved in this browser. Download a backup regularly and restore it on any device.</p>
+ <div class="row" style="justify-content:flex-start"><button class="btn ghost" data-act="export">Download backup</button><label class="btn ghost" style="margin:0;cursor:pointer;color:var(--t)">Restore backup<input id="imp" type="file" accept=".json" hidden></label><button class="btn ghost" data-act="reset">Erase all data</button></div></div>`}
+
+let cur='dashboard';
+function render(){
+ $('#nav').innerHTML=`<div class="brand"><b>${e(db.co.name)}</b><span>Ledger</span></div>`+pages.map(p=>`<a tabindex="0" role="button" data-p="${p[0]}" class="${p[0]==cur?'on':''}">${p[1]}</a>`).join('');
+ $('#main').innerHTML=cur=='dashboard'?dash():cur=='settings'?sets():list(cur);scrollTo(0,0)}
+
+function field(k,t,o){const r=o?'':' required';
+ if(t=='date')return`<input type="date" name="${k}" value="${today()}"${r}>`;
+ if(t=='number')return`<input type="number" name="${k}" step="any" min="0" inputmode="decimal"${r}>`;
+ if(t=='item')return`<select name="${k}"${r}>${db.stock.map(i=>`<option value="${i.id}">${e(i.name)} (${qtyOf(i)})</option>`).join('')}</select>`;
+ if(Array.isArray(t))return`<select name="${k}">${t.map(x=>`<option>${x}</option>`).join('')}</select>`;
+ return`<input name="${k}"${r}>`}
+function form(k){const m=M[k];
+ $('#ov').innerHTML=`<div class="ov"><form class="sheet" id="f" data-k="${k}"><h3>${m.add}</h3>${m.f.map(([key,l,t,o])=>`<label>${l}${field(key,t,o)}</label>`).join('')}<p id="err" class="neg" style="margin-bottom:10px"></p><div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div></form></div>`}
+
+document.addEventListener('click',ev=>{
+ const t=ev.target.closest('[data-add],[data-del],[data-close],[data-p],[data-act]');if(!t)return;
+ if(t.dataset.p){cur=t.dataset.p;return render()}
+ if('close' in t.dataset)return $('#ov').innerHTML='';
+ if(t.dataset.add)return form(t.dataset.add);
+ if(t.dataset.act=='export'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='ledger-backup-'+today()+'.json';a.click();return}
+ if(!t.dataset.armed){const o=t.textContent;t.dataset.armed=1;t.textContent='Tap again to confirm';return setTimeout(()=>{t.dataset.armed='';t.textContent=o},2500)}
+ if(t.dataset.del)db[cur]=db[cur].filter(x=>x.id!=t.dataset.del);
+ else if(t.dataset.act=='reset')db=blank();
+ save();render()});
+document.addEventListener('keydown',ev=>{if(ev.key=='Enter'&&ev.target.dataset&&ev.target.dataset.p)ev.target.click()});
+document.addEventListener('submit',ev=>{ev.preventDefault();const f=ev.target,fd=new FormData(f);
+ if(f.id=='sf'){db.co={name:fd.get('name'),cur:fd.get('cur'),trn:fd.get('trn')};save();return render()}
+ const k=f.dataset.k,m=M[k],v={};m.f.forEach(([key,,t])=>{const x=fd.get(key);v[key]=t=='number'&&x!==''&&x!==null?+x:(x||'')});
+ const r=m.mk(v);if(typeof r=='string')return $('#err').textContent=r;
+ db[k].push({id:uid(),...r});save();$('#ov').innerHTML='';render()});
+document.addEventListener('change',ev=>{if(ev.target.id!='imp')return;const fl=ev.target.files[0];if(!fl)return;const rd=new FileReader();
+ rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.co||!d.sales)throw 0;db={...blank(),...d};save();render()}catch(_){alert('That file is not a valid Ledger backup.')}};rd.readAsText(fl)});
+render();
+</script>
+</body>
+</html>
