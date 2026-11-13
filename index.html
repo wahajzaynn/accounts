@@ -81,11 +81,11 @@ const pn=v=>v>=0?'pos':'neg';
 
 const M={
 sales:{t:'Sales',add:'New sale',
- f:[['date','Date','date'],['party','Customer','text'],['item','Item','item'],['qty','Quantity','number'],['price','Unit price','number'],['paid','Received now (blank = in full)','number','o']],
- h:['Date','Customer','Item','Qty','Total','Received','Profit'],
- r:x=>[x.date,x.party,iname(x.item),x.qty,fmt(x.total),fmt(x.paid),fmt(x.total-x.cogs)],
- mk(v){const i=db.stock.find(s=>s.id==v.item);if(!i)return'Add a stock item first.';if(v.qty>qtyOf(i))return'Only '+qtyOf(i)+' in stock.';const total=v.qty*v.price;return{...v,total,cogs:v.qty*n(i.cost),paid:v.paid===''?total:n(v.paid)}},
- sum:()=>kpi('Total sales',fmt(sum(db.sales,x=>x.total)))+kpi('Gross profit',fmt(sum(db.sales,x=>x.total-x.cogs)),'pos')},
+ f:[['date','Date','date'],['party','Customer','text'],['item','Item','item'],['qty','Quantity','number'],['price','Unit price','number'],['mode','Payment type',['Prepaid','COD']],['paid','Received now (blank: full if prepaid, none if COD)','number','o']],
+ h:['Date','Customer','Item','Qty','Total','Received','Balance','Type','Profit'],
+ r:x=>[x.date,x.party,iname(x.item),x.qty,fmt(x.total),fmt(x.paid),fmt(x.total-x.paid),x.mode=='COD'?'COD '+(x.status||'Delivered').toLowerCase():'Prepaid',fmt(x.total-x.cogs)],
+ mk(v){const i=db.stock.find(s=>s.id==v.item);if(!i)return'Add a stock item first.';if(v.qty>qtyOf(i))return'Only '+qtyOf(i)+' in stock.';const total=v.qty*v.price;const cod=v.mode=='COD',adv=cod?n(v.paid):(v.paid===''?total:n(v.paid));if(adv>total)return'Amount received is more than the total.';return{...v,total,cogs:v.qty*n(i.cost),paid:adv,status:cod&&adv<total?'Pending':'Delivered'}},
+ sum:()=>kpi('Total sales',fmt(sum(db.sales,x=>x.total)))+kpi('Gross profit',fmt(sum(db.sales,x=>x.total-x.cogs)),'pos')+kpi('COD balance to collect',fmt(sum(db.sales.filter(x=>x.status=='Pending'),x=>x.total-x.paid)),'neg')},
 purchases:{t:'Purchases',add:'New purchase',
  f:[['date','Date','date'],['party','Supplier','text'],['item','Item','item'],['qty','Quantity','number'],['price','Unit cost','number'],['paid','Paid now (blank = in full)','number','o']],
  h:['Date','Supplier','Item','Qty','Total','Paid'],
@@ -145,7 +145,7 @@ function dash(){
 
 function list(k){const m=M[k],rows=[...db[k]].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
  return `<div class="hd"><h2>${m.t}</h2><button class="btn" data-add="${k}">Add</button></div><div class="grid">${m.sum()}</div>
- <div class="card tw"><table><tr>${m.h.map(h=>`<th>${h}</th>`).join('')}<th></th></tr>${rows.map(x=>`<tr>${m.r(x).map(c=>`<td>${e(c)}</td>`).join('')}<td><button class="btn ghost sm" data-del="${x.id}">Delete</button></td></tr>`).join('')||`<tr><td colspan="9" class="mut">No records yet. Tap Add to create the first one.</td></tr>`}</table></div>`}
+ <div class="card tw"><table><tr>${m.h.map(h=>`<th>${h}</th>`).join('')}<th></th></tr>${rows.map(x=>`<tr>${m.r(x).map(c=>`<td>${e(c)}</td>`).join('')}<td>${x.status=='Pending'?`<button class="btn sm" data-col="${x.id}">Collect balance</button> `:''}<button class="btn ghost sm" data-del="${x.id}">Delete</button></td></tr>`).join('')||`<tr><td colspan="9" class="mut">No records yet. Tap Add to create the first one.</td></tr>`}</table></div>`}
 
 function sets(){return `<div class="hd"><h2>Settings</h2></div><form id="sf" class="card" style="margin-bottom:12px"><h3>Company</h3>
  <label>Company name<input name="name" value="${e(db.co.name)}" required></label>
@@ -169,10 +169,11 @@ function form(k){const m=M[k];
  $('#ov').innerHTML=`<div class="ov"><form class="sheet" id="f" data-k="${k}"><h3>${m.add}</h3>${m.f.map(([key,l,t,o])=>`<label>${l}${field(key,t,o)}</label>`).join('')}<p id="err" class="neg" style="margin-bottom:10px"></p><div class="row"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Save</button></div></form></div>`}
 
 document.addEventListener('click',ev=>{
- const t=ev.target.closest('[data-add],[data-del],[data-close],[data-p],[data-act]');if(!t)return;
+ const t=ev.target.closest('[data-add],[data-del],[data-close],[data-p],[data-act],[data-col]');if(!t)return;
  if(t.dataset.p){cur=t.dataset.p;return render()}
  if('close' in t.dataset)return $('#ov').innerHTML='';
  if(t.dataset.add)return form(t.dataset.add);
+ if(t.dataset.col){const x=db.sales.find(s=>s.id==t.dataset.col);if(x){x.paid=x.total;x.status='Delivered'}save();return render()}
  if(t.dataset.act=='export'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='ledger-backup-'+today()+'.json';a.click();return}
  if(!t.dataset.armed){const o=t.textContent;t.dataset.armed=1;t.textContent='Tap again to confirm';return setTimeout(()=>{t.dataset.armed='';t.textContent=o},2500)}
  if(t.dataset.del)db[cur]=db[cur].filter(x=>x.id!=t.dataset.del);

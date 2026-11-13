@@ -4,7 +4,7 @@ A dark, minimal, mobile-friendly accounting app. No build step, no dependencies:
 
 ## Features
 - **Dashboard**: cash balance, revenue, gross and net profit, expenses, stock value, receivables, payables, 6-month chart, recent activity, low-stock alerts
-- **Sales** (auto profit per sale, stock reduced), **Purchases** (stock increased, weighted-average cost)
+- **Sales** with Prepaid or COD (partial advance supported, "Collect balance" on delivery), auto profit per sale, stock reduced, **Purchases** (stock increased, weighted-average cost)
 - **Stock** with opening quantity, cost, price and low-stock alerts
 - **Expenses** by category, **Capital** (investment / withdrawal), **Payments** (received / paid)
 - Company name, currency and tax number in Settings
