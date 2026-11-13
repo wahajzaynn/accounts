@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0e">
+<title>Ledger – Company Accounts</title>
+<style>
+:root{--bg:#0b0b0e;--c:#1a1a1f;--v:#6d5dfc;--g:#34d399;--r:#ff5a6a;--m:#8b8b98;color-scheme:dark}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html{background:#050507}
+body{font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+#app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
+#app::before{content:"";position:absolute;top:-140px;right:-100px;width:340px;height:340px;background:radial-gradient(circle,#6d5dfc,transparent 65%);opacity:.5;pointer-events:none}
+.top{position:relative;padding:18px 20px 4px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.who{display:flex;align-items:center;gap:12px}
+.av{width:42px;height:42px;border-radius:50%;background:var(--v);display:grid;place-items:center;font-weight:700;font-size:17px}
+.mu{color:var(--m);font-size:12px}
+h2{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.rb{width:42px;height:42px;border-radius:50%;border:0;background:var(--c);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:300;cursor:pointer}
+.rb.v{background:var(--v)}
+.big{font-size:42px;font-weight:700;letter-spacing:-.03em;line-height:1.15;margin:2px 0 18px;font-variant-numeric:tabular-nums}
+.pills{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pill{display:flex;align-items:center;gap:10px;background:var(--c);border-radius:18px;padding:12px;min-width:0}
+.pill b{font-size:15px;display:block;font-variant-numeric:tabular-nums}
+.pills .pill:last-child:nth-child(odd){grid-column:1/-1}
+.ib{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ib.up{background:#e3f8ef;color:#0f9d62}.ib.dn{background:#ffe9ec;color:#e0364a}.ib.nt{background:#eeeaff;color:var(--v)}
+.pill .ib.up{background:rgba(52,211,153,.18);color:var(--g)}.pill .ib.dn{background:rgba(255,90,106,.18);color:var(--r)}
+.pos{color:var(--g)}.neg{color:var(--r)}
+svg text{fill:#6e6e7a;font-size:11px}
+.wal{display:flex;gap:12px;overflow-x:auto;padding:10px 0 22px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.wc{flex:0 0 164px;scroll-snap-align:start;border-radius:22px;padding:16px;background:var(--c)}
+.wc.a{background:linear-gradient(145deg,#7a6cff,#4a3bd6)}
+.wi{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;margin-bottom:14px}
+.wc .mu{color:rgba(255,255,255,.6)}.wc b{font-size:18px;display:block;margin-top:2px;font-variant-numeric:tabular-nums}
+.wh{position:relative;background:#fff;color:#111;border-radius:30px 30px 0 0;padding:18px 18px 130px;min-height:55vh}
+.seg{display:flex;background:#f0f0f5;border-radius:999px;padding:4px;margin-bottom:8px}
+.seg button{flex:1;border:0;border-radius:999px;padding:10px;font:inherit;font-weight:600;background:transparent;color:#6b6b78;cursor:pointer}
+.seg button.on{background:#111;color:#fff}
+.sec{color:#8b8b98;font-size:12px;margin:4px 0 2px}
+.it{display:flex;align-items:center;gap:12px;padding:13px 0}
+.it+.it{border-top:1px solid #efeff4}
+.it .t{font-weight:600}.it small{display:block;color:#8b8b98;font-size:12px}.it small.neg{color:#e0364a}
+.am{margin-left:auto;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.am.up{color:#0f9d62}.am.dn{color:#e0364a}
+.cb{background:#111;color:#fff;border:0;border-radius:999px;padding:4px 11px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;margin-right:6px}
+.lk{border:0;background:none;color:var(--v);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:8px 4px}
+.pk{display:flex;align-items:center;gap:12px;color:#111;font-size:15px;font-weight:600;margin:0;cursor:pointer}.pk input{width:22px;height:22px;margin:0;flex:none;accent-color:#111}.pk small{font-weight:400;color:#8b8b98}.ln.on{background:#f7f7fb;border-radius:14px;padding:10px 12px}.ln [hidden]{display:none}
+.emp{color:#8b8b98;text-align:center;padding:36px 12px}
+.nv{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:#fff;border-radius:26px 26px 0 0;display:flex;justify-content:space-around;align-items:flex-start;padding:10px 8px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px rgba(0,0,0,.4);z-index:5}
+.nv a{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:#a0a0ac;cursor:pointer;min-width:62px}
+.nv a.on{color:#111}
+.plus{width:56px;height:56px;margin-top:-32px;border-radius:50%;border:0;background:#111;color:#fff;font-size:30px;font-weight:300;line-height:1;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.ov{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center}
+.sh{background:#fff;color:#111;border-radius:28px 28px 0 0;width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px))}
+.sh h3,.wh h3{font-size:18px;margin-bottom:14px}
+.sh label,.wh label{display:block;color:#6b6b78;font-size:12px;margin-bottom:12px}
+input,select{display:block;width:100%;margin-top:6px;background:#f3f3f7;border:1px solid #e6e6ee;color:#111;border-radius:14px;padding:12px;font:inherit;font-size:16px}
+.bk{background:#111;color:#fff;border:0;border-radius:999px;padding:13px 20px;font:inherit;font-weight:600;cursor:pointer}
+.bk.g{background:#f0f0f5;color:#111}
+.row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.err{color:#e0364a;margin-bottom:10px}
+.ln{padding:10px 0;border-bottom:1px solid #efeff4;margin-bottom:6px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--v);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="app"><main id="main"></main><nav class="nv" id="nav" aria-label="Sections"></nav></div>
+<div id="ov"></div>
+<script>
+const K='ledger.v1',$=s=>document.querySelector(s);
+const blank=()=>({v:2,co:{name:'My Company',cur:'AED',trn:''},stock:[],sales:[],purchases:[],expenses:[],capital:[],payments:[]});
+let db;try{db=JSON.parse(localStorage.getItem(K))}catch(_){}
+db=db||blank();
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(db))}catch(_){}};
+const n=x=>+x||0,uid=()=>Math.random().toString(36).slice(2,9),today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=v=>db.co.cur+' '+n(v).toLocaleString('en',{maximumFractionDigits:2});
+const cp=v=>v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(v<1e4?1:0)+'k':Math.round(v)+'';
+const sum=(a,f)=>a.reduce((s,x)=>s+n(f(x)),0);
+const lq=(a,id)=>sum(a,r=>sum(r.lines.filter(l=>l.item==id),l=>l.qty));
+const qtyOf=i=>n(i.open)+lq(db.purchases,i.id)-lq(db.sales,i.id);
+const costOf=i=>{const q=n(i.open)+lq(db.purchases,i.id);return q?(n(i.open)*n(i.cost)+sum(db.purchases,r=>sum(r.lines.filter(l=>l.item==i.id),l=>l.qty*l.price)))/q:n(i.cost)};
+function mig(){if(db.v==2)return;for(const k of['sales','purchases'])db[k].forEach(r=>{if(!r.lines)r.lines=[{item:r.item,qty:r.qty,price:r.price}]});
+ db.stock.forEach(i=>{const o=n(i.open),pl=db.purchases.flatMap(r=>r.lines.filter(l=>l.item==i.id)),pq=sum(pl,l=>l.qty),pv=sum(pl,l=>l.qty*l.price);if(o>0&&pq)i.cost=(n(i.cost)*(o+pq)-pv)/o});db.v=2;save()}
+mig();
+const iname=id=>(db.stock.find(i=>i.id==id)||{name:'(deleted)'}).name;
+const cats=['Rent','Salaries','Utilities','Marketing','Transport','Supplies','Software','Tax and fees','Other'];
+const mon=()=>today().slice(0,7);
+const P={home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',sales:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',stock:'<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',up:'<path d="M7 17L17 7M9 7h8v8"/>',dn:'<path d="M7 7l10 10M17 9v8H9"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
+
+const M={
+sales:{t:'Sales',add:'New sale',
+ f:[['date','Date','date'],['party','Customer','text'],['lines','Items','lines'],['mode','Payment type',['Prepaid','COD']],['paid','Received now (blank: full if prepaid, none if COD)','number','o']],
+ i:x=>[x.party||'Sale',x.lines.map(l=>iname(l.item)+' × '+l.qty).join(', ')+' · '+x.date,x.total,1,[x.mode=='COD'?'COD '+(x.status=='Pending'?'pending':'delivered'):'',x.total-x.paid>0?'Balance '+fmt(x.total-x.paid):''].filter(Boolean).join(' · '),x.status=='Pending'],
+ mk(v,id){const L=v.lines;if(!L.length)return'Select at least one item.';if(L.some(l=>!(l.qty>0)))return'Enter a quantity for every item.';const old=db.sales.find(r=>r.id==id);for(const it of new Set(L.map(l=>l.item))){const i=db.stock.find(s=>s.id==it);if(!i)return'Add a stock item first.';const back=old?sum(old.lines.filter(l=>l.item==it),l=>l.qty):0;if(sum(L.filter(l=>l.item==it),l=>l.qty)>qtyOf(i)+back)return'Only '+(qtyOf(i)+back)+' of '+i.name+' in stock.'}const total=sum(L,l=>l.qty*l.price),cogs=sum(L,l=>l.qty*costOf(db.stock.find(s=>s.id==l.item))),cod=v.mode=='COD',adv=cod?n(v.paid):(v.paid===''?total:n(v.paid));if(adv>total)return'Amount received is more than the total.';return{...v,total,cogs,paid:adv,status:cod&&adv<total?'Pending':'Delivered'}},
+ sum:()=>[['Total sales',fmt(sum(db.sales,x=>x.total))],['Gross profit',fmt(sum(db.sales,x=>x.total-x.cogs)),'pos'],['COD balance to collect',fmt(sum(db.sales.filter(x=>x.status=='Pending'),x=>x.total-x.paid)),'neg']]},
+purchases:{t:'Purchases',add:'New purchase',
+ f:[['date','Date','date'],['party','Supplier','text'],['lines','Items','lines'],['paid','Paid now (blank = in full)','number','o']],
+ i:x=>[x.party||'Purchase',x.lines.map(l=>iname(l.item)+' × '+l.qty).join(', ')+' · '+x.date,x.total,0,x.total-x.paid>0?'Unpaid '+fmt(x.total-x.paid):''],
+ mk(v,id){const L=v.lines;if(!L.length)return'Select at least one item.';if(L.some(l=>!(l.qty>0)))return'Enter a quantity for every item.';if(!db.stock.length)return'Add a stock item first.';const old=db.purchases.find(r=>r.id==id);for(const l of old?old.lines:[]){const i=db.stock.find(s=>s.id==l.item);if(i&&qtyOf(i)-sum(old.lines.filter(x=>x.item==l.item),x=>x.qty)+sum(L.filter(x=>x.item==l.item),x=>x.qty)<0)return'Some of '+i.name+' is already sold.'}const total=sum(L,l=>l.qty*l.price);if(n(v.paid)>total)return'Paid is more than the total.';return{...v,total,paid:v.paid===''?total:n(v.paid)}},
+ sum:()=>[['Total purchases',fmt(sum(db.purchases,x=>x.total))],['Unpaid to suppliers',fmt(sum(db.purchases,x=>x.total-x.paid)),'neg']]},
+expenses:{t:'Expenses',add:'New expense',
+ f:[['date','Date','date'],['category','Category',cats],['note','Description','text','o'],['amount','Amount','number']],
+ i:x=>[x.category,(x.note?x.note+' · ':'')+x.date,x.amount,0],mk:v=>v,
+ sum:()=>[['Total expenses',fmt(sum(db.expenses,x=>x.amount))],['This month',fmt(sum(db.expenses.filter(x=>x.date.startsWith(mon())),x=>x.amount))]]},
+stock:{t:'Stock',add:'New stock item',
+ f:[['name','Item name','text'],['sku','SKU','text','o'],['open','Opening quantity','number'],['cost','Unit cost','number'],['price','Selling price','number'],['min','Low stock alert at','number','o']],
+ i:x=>[x.name,(x.sku?x.sku+' · ':'')+qtyOf(x)+' on hand · cost '+fmt(costOf(x)),qtyOf(x)*costOf(x),2,qtyOf(x)<=n(x.min)?'Low stock':''],
+ mk(v,id){let o=n(v.open);const i=id&&db.stock.find(s=>s.id==id);if(i){o-=qtyOf(i)-n(i.open);if(o<0)return'Quantity is lower than purchases minus sales ('+(n(i.open)-o)+' minimum).'}return{...v,open:o,cost:n(v.cost),price:n(v.price),min:n(v.min)}},
+ sum:()=>[['Stock value',fmt(sum(db.stock,i=>qtyOf(i)*costOf(i)))],['Low stock items',db.stock.filter(i=>qtyOf(i)<=n(i.min)).length,db.stock.some(i=>qtyOf(i)<=n(i.min))?'neg':'']]},
+capital:{t:'Capital',add:'New capital entry',
+ f:[['date','Date','date'],['type','Type',['Investment','Withdrawal']],['party','Owner or partner','text'],['amount','Amount','number']],
+ i:x=>[x.party,x.type+' · '+x.date,x.amount,x.type=='Investment'?1:0],mk:v=>v,
+ sum:()=>[['Invested',fmt(sum(db.capital.filter(x=>x.type=='Investment'),x=>x.amount)),'pos'],['Withdrawn',fmt(sum(db.capital.filter(x=>x.type=='Withdrawal'),x=>x.amount))]]},
+payments:{t:'Payments',add:'New payment',
+ f:[['date','Date','date'],['dir','Direction',['Received','Paid']],['party','Customer or supplier','text'],['method','Method',['Cash','Bank','Card','Cheque']],['amount','Amount','number'],['ref','Reference','text','o']],
+ i:x=>[x.party,x.dir+' · '+x.method+' · '+x.date,x.amount,x.dir=='Received'?1:0,x.ref?'Ref '+x.ref:''],mk:(v,id)=>{const c=calc(),old=db.payments.find(x=>x.id==id),o=(v.dir=='Received'?c.ar:c.ap)+(old&&old.dir==v.dir?n(old.amount):0);if(v.amount>o+1e-9)return'That is more than the '+fmt(Math.max(o,0))+' currently owed.';return v},
+ sum:()=>[['Received',fmt(sum(db.payments.filter(x=>x.dir=='Received'),x=>x.amount)),'pos'],['Paid out',fmt(sum(db.payments.filter(x=>x.dir=='Paid'),x=>x.amount))]]}
+};
+const pages=[['dashboard','Dashboard'],['sales','Sales'],['purchases','Purchases'],['expenses','Expenses'],['stock','Stock'],['capital','Capital'],['payments','Payments'],['settings','Settings']];
+
+function calc(){
+ const rev=sum(db.sales,x=>x.total),cogs=sum(db.sales,x=>x.cogs),exp=sum(db.expenses,x=>x.amount);
+ const inv=sum(db.capital.filter(x=>x.type=='Investment'),x=>x.amount),wd=sum(db.capital.filter(x=>x.type=='Withdrawal'),x=>x.amount);
+ const pin=sum(db.payments.filter(x=>x.dir=='Received'),x=>x.amount),pout=sum(db.payments.filter(x=>x.dir=='Paid'),x=>x.amount);
+ const sp=sum(db.sales,x=>x.paid),pp=sum(db.purchases,x=>x.paid),pur=sum(db.purchases,x=>x.total);
+ return{rev,cogs,exp,gp:rev-cogs,np:rev-cogs-exp,cash:inv-wd+sp+pin-pp-pout-exp,ar:rev-sp-pin,ap:pur-pp-pout,cap:inv-wd,sv:sum(db.stock,i=>qtyOf(i)*costOf(i))};
+}
+function months(){const r=[],d=new Date();for(let i=5;i>=0;i--){const x=new Date(d.getFullYear(),d.getMonth()-i,1),k=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'),f=a=>a.filter(y=>(y.date||'').startsWith(k));
+ r.push({l:x.toLocaleString('en',{month:'short'}),rev:sum(f(db.sales),s=>s.total),cost:sum(f(db.sales),s=>s.cogs)+sum(f(db.expenses),s=>s.amount)})}return r}
+function chart(){const ms=months(),mx=Math.max(1,...ms.flatMap(m=>[m.rev,m.cost])),X=i=>56+i*98,Y=v=>150-v/mx*120;
+ const sm=k=>ms.map((m,i)=>{const x=X(i),y=Y(m[k]);if(!i)return`M${x} ${y}`;const p=X(i-1),q=Y(ms[i-1][k]),h=(x-p)/2;return`C${p+h} ${q} ${x-h} ${y} ${x} ${y}`}).join(' ');
+ const dot=(k,c)=>`<circle cx="${X(5)}" cy="${Y(ms[5][k])}" r="6" fill="${c}" stroke="#0b0b0e" stroke-width="3"/>`;
+ const gl=[0,1,2,3].map(j=>{const v=mx*j/3,y=Y(v);return`<line x1="40" x2="590" y1="${y}" y2="${y}" stroke="#25252c"/><text x="0" y="${y+4}">${cp(v)}</text>`}).join('');
+ return `<svg viewBox="0 0 600 190" width="100%" style="margin:16px 0 0" role="img" aria-label="Income and costs by month"><defs><linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34d399" stop-opacity=".25"/><stop offset="1" stop-color="#34d399" stop-opacity="0"/></linearGradient></defs>${gl}<path d="${sm('rev')} L${X(5)} 150 L${X(0)} 150Z" fill="url(#gr)"/><path d="${sm('rev')}" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round"/><path d="${sm('cost')}" fill="none" stroke="#ff5a6a" stroke-width="3" stroke-linecap="round"/>${dot('rev','#34d399')}${dot('cost','#ff5a6a')}${ms.map((m,i)=>`<text x="${X(i)}" y="180" text-anchor="middle">${m.l}</text>`).join('')}</svg><div class="mu" style="margin-top:2px"><span class="pos">&#9679;</span> Income &nbsp; <span class="neg">&#9679;</span> Costs (goods sold + expenses)</div>`}
+
+let tab='tx';
+function dash(){
+ const c=calc(),low=db.stock.filter(i=>qtyOf(i)<=n(i.min));
+ const rec=[...db.sales.map(x=>['Sale',x.date,x.party,x.total,1]),...db.purchases.map(x=>['Purchase',x.date,x.party,x.total,0]),...db.expenses.map(x=>['Expense',x.date,x.category,x.amount,0]),
+  ...db.payments.map(x=>['Payment '+x.dir.toLowerCase(),x.date,x.party,x.amount,x.dir=='Received'?1:0]),...db.capital.map(x=>['Capital '+x.type.toLowerCase(),x.date,x.party,x.amount,x.type=='Investment'?1:0])]
+  .sort((a,b)=>b[1].localeCompare(a[1])).slice(0,8);
+ const tx=rec.map(r=>`<div class="it"><span class="ib ${r[4]?'up':'dn'}">${svg(r[4]?'up':'dn')}</span><div><div class="t">${e(r[2]||r[0])}</div><small>${e(r[0])} · ${e(r[1])}</small></div><div class="am ${r[4]?'up':'dn'}">${r[4]?'+':'-'}${fmt(r[3])}</div></div>`).join('')||'<p class="emp">No activity yet. Tap + to add your first sale, purchase or expense.</p>';
+ const an=[['Net profit',c.np,c.np>=0?'up':'dn'],['Gross profit',c.gp,c.gp>=0?'up':'dn'],['Revenue',c.rev,''],['Expenses',c.exp,''],['Capital plus profit',c.cap+c.np,'']].map(a=>`<div class="it"><div class="t">${a[0]}</div><div class="am ${a[2]}">${fmt(a[1])}</div></div>`).join('')+low.map(i=>`<div class="it"><div><div class="t">${e(i.name)}</div><small class="neg">Low stock</small></div><div class="am dn">${qtyOf(i)} left</div></div>`).join('');
+ const wal=[['Net profit',c.np,'up'],['Stock value',c.sv,'stock'],['Customers owe you',c.ar,'sales'],['You owe suppliers',c.ap,'dn'],['Owner capital',c.cap,'home']].map((w,i)=>`<div class="wc${i?'':' a'}"><span class="wi">${svg(w[2])}</span><div class="mu">${w[0]}</div><b>${fmt(w[1])}</b></div>`).join('');
+ return `<div class="top"><div class="bar"><div class="who"><span class="av">${e((db.co.name||'L')[0].toUpperCase())}</span><div><div class="mu">Welcome back</div><b>${e(db.co.name)}</b></div></div><button class="rb" data-p="settings" aria-label="Settings">${svg('gear')}</button></div>
+ <div class="mu" style="margin-top:24px">Total balance</div><div class="big">${fmt(c.cash)}</div>
+ <div class="pills"><div class="pill"><span class="ib up">${svg('up')}</span><div><div class="mu">Income</div><b>${fmt(c.rev)}</b></div></div><div class="pill"><span class="ib dn">${svg('dn')}</span><div><div class="mu">Expenses</div><b>${fmt(c.exp)}</b></div></div></div>
+ ${chart()}<div class="wal">${wal}</div></div>
+ <div class="wh"><div class="seg"><button data-tab="tx" class="${tab=='tx'?'on':''}">Transactions</button><button data-tab="an" class="${tab=='an'?'on':''}">Analytics</button></div>${tab=='tx'?tx:an}</div>`}
+
+function it(k,x){const[t,s,a,d,ex,pend]=M[k].i(x);
+ return `<div class="it"><span class="ib ${['dn','up','nt'][d]}">${svg(d==1?'up':d==0?'dn':'stock')}</span><div><div class="t">${e(t)}</div><small>${e(s)}</small>${ex?`<small class="neg">${e(ex)}</small>`:''}</div><div class="am ${['dn','up',''][d]}">${d==1?'+':d==0?'-':''}${fmt(a)}<div>${pend?`<button class="cb" data-col="${x.id}">Collect balance</button>`:''}<button class="lk" data-edit="${x.id}">Edit</button> &nbsp; <button class="lk" data-del="${x.id}">Delete</button></div></div></div>`}
+function list(k){const m=M[k],rows=[...db[k]].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ return `<div class="top"><div class="bar"><div><div class="mu">${e(db.co.name)}</div><h2>${m.t}</h2></div><button class="rb v" data-add="${k}" aria-label="${m.add}">+</button></div><div class="pills" style="margin:20px 0 22px">${m.sum().map(s=>`<div class="pill"><div><div class="mu">${s[0]}</div><b class="${s[2]||''}">${s[1]}</b></div></div>`).join('')}</div></div>
+ <div class="wh"><div class="sec">${rows.length} ${rows.length==1?'record':'records'}</div>${rows.map(x=>it(k,x)).join('')||'<p class="emp">Nothing here yet. Tap + to add the first one.</p>'}</div>`}
+function sets(){return `<div class="top"><div class="bar"><div><div class="mu">Ledger</div><h2>Settings</h2></div></div><div style="height:20px"></div></div>
+ <div class="wh"><form id="sf"><h3>Company</h3><label>Company name<input name="name" value="${e(db.co.name)}" required></label><label>Currency<input name="cur" value="${e(db.co.cur)}" maxlength="5" required></label><label>Tax registration number<input name="trn" value="${e(db.co.trn)}"></label><button class="bk">Save changes</button></form>
+ <h3 style="margin-top:28px">Your data</h3><p class="mu" style="margin-bottom:12px">Data is saved in this browser. Download a backup regularly and restore it on any device.</p>
+ <div class="row" style="justify-content:flex-start"><button class="bk g" data-act="export">Download backup</button><label class="bk g" style="margin:0;cursor:pointer;color:#111;font-size:14px">Restore backup<input id="imp" type="file" accept=".json" hidden></label><button class="bk g" data-act="reset">Erase all data</button></div></div>`}
+
+let cur='dashboard';
+function render(){
+ const A=(p,l,i)=>`<a tabindex="0" role="button" data-p="${p}" class="${p==cur?'on':''}">${svg(i)}${l}</a>`;
+ $('#nav').innerHTML=A('dashboard','Home','home')+A('sales','Sales','sales')+`<button class="plus" data-q="quick" aria-label="Add new">+</button>`+A('stock','Stock','stock')+`<a tabindex="0" role="button" data-q="menu">${svg('menu')}Menu</a>`;
+ $('#main').innerHTML=cur=='dashboard'?dash():cur=='settings'?sets():list(cur)}
+function quick(){$('#ov').innerHTML=`<div class="ov"><div class="sh"><h3>Add new</h3><div class="g2">${[['sales','Sale'],['purchases','Purchase'],['expenses','Expense'],['stock','Stock item'],['capital','Capital'],['payments','Payment']].map(k=>`<button class="bk g" data-add="${k[0]}">${k[1]}</button>`).join('')}</div><div class="row"><button class="bk g" data-close>Cancel</button></div></div></div>`}
+function menu(){$('#ov').innerHTML=`<div class="ov"><div class="sh"><h3>Menu</h3>${pages.map(p=>`<div class="it"><a data-p="${p[0]}" style="cursor:pointer;flex:1;font-weight:600">${p[1]}</a></div>`).join('')}<div class="row" style="margin-top:14px"><button class="bk g" data-close>Close</button></div></div></div>`}
+function lnrow(i,s,k){const pr=s?+(s.v/(s.qty||1)).toFixed(4):(k=='sales'?n(i.price):n(costOf(i)));return`<div class="ln${s?' on':''}"><label class="pk"><input type="checkbox" data-pick="${i.id}"${s?' checked':''}><span>${e(i.name)}<br><small>${qtyOf(i)} on hand</small></span></label><div class="g2" style="margin:10px 0 0"${s?'':' hidden'}><label style="margin:0">Quantity<input type="number" name="q_${i.id}" step="any" min="0" inputmode="decimal" value="${s?s.qty:''}"${s?' required':' disabled'}></label><label style="margin:0">Unit price<input type="number" name="p_${i.id}" step="any" min="0" inputmode="decimal" value="${pr}"${s?' required':' disabled'}></label></div></div>`}
+function field(k,t,o,val){const r=o?'':' required',vv=e(val??'');if(t=='lines'){const sel={};(val||[]).forEach(l=>{const q=sel[l.item]||(sel[l.item]={qty:0,v:0});q.qty+=n(l.qty);q.v+=n(l.qty)*n(l.price)});return db.stock.length?`<div id="lines" data-k="${o}" style="margin-bottom:12px">${db.stock.map(i=>lnrow(i,sel[i.id],o)).join('')}</div>`:'<p class="emp">Add a stock item first.</p>'}
+ if(t=='date')return`<input type="date" name="${k}" value="${vv||today()}"${r}>`;
+ if(t=='number')return`<input type="number" name="${k}" step="any" min="0" inputmode="decimal" value="${vv}"${r}>`;
+ if(t=='item')return`<select name="${k}"${r}>${db.stock.map(i=>`<option value="${i.id}">${e(i.name)} (${qtyOf(i)})</option>`).join('')}</select>`;
+ if(Array.isArray(t))return`<select name="${k}">${t.map(x=>`<option${x==val?' selected':''}>${x}</option>`).join('')}</select>`;
+ return`<input name="${k}" value="${vv}"${r}>`}
+function form(k,id){const m=M[k],x=id?db[k].find(r=>r.id==id):null;
+ $('#ov').innerHTML=`<div class="ov"><form class="sh" id="f" data-k="${k}" data-id="${id||''}"><h3>${id?'Edit':m.add}</h3>${m.f.map(([key,l,t,o])=>t=='lines'?`<div class="sec">${l} — tick all that apply</div>${field(key,t,k,x&&x.lines)}`:`<label>${id&&k=='stock'&&key=='open'?'Quantity on hand':l}${field(key,t,o,x&&(id&&k=='stock'&&key=='open'?qtyOf(x):x[key]))}</label>`).join('')}<p id="err" class="err"></p><div class="row"><button type="button" class="bk g" data-close>Cancel</button><button class="bk">Save</button></div></form></div>`}
+
+document.addEventListener('click',ev=>{
+ const t=ev.target.closest('[data-add],[data-del],[data-close],[data-p],[data-act],[data-col],[data-q],[data-tab],[data-edit],[data-row],[data-rm]');if(!t)return;
+ if(t.dataset.q)return t.dataset.q=='menu'?menu():quick();
+ if(t.dataset.tab){tab=t.dataset.tab;return render()}
+ if(t.dataset.p){cur=t.dataset.p;$('#ov').innerHTML='';render();return scrollTo(0,0)}
+ if('close' in t.dataset)return $('#ov').innerHTML='';
+ if(t.dataset.edit)return form(cur,t.dataset.edit);
+ if('row' in t.dataset)return $('#lines').insertAdjacentHTML('beforeend',lnrow());
+ if('rm' in t.dataset){if(document.querySelectorAll('.ln').length>1)t.closest('.ln').remove();return}
+ if(t.dataset.add)return form(t.dataset.add);
+ if(t.dataset.col){const x=db.sales.find(s=>s.id==t.dataset.col);if(x){x.paid=x.total;x.status='Delivered'}save();return render()}
+ if(t.dataset.act=='export'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='ledger-backup-'+today()+'.json';a.click();return}
+ if(!t.dataset.armed){const o=t.textContent;t.dataset.armed=1;t.textContent='Tap again to confirm';return setTimeout(()=>{t.dataset.armed='';t.textContent=o},2500)}
+ if(t.dataset.del){const id=t.dataset.del;
+  if(cur=='purchases'){const p=db.purchases.find(x=>x.id==id);if(p&&p.lines.some(l=>{const i=db.stock.find(s=>s.id==l.item);return i&&qtyOf(i)-sum(p.lines.filter(y=>y.item==l.item),y=>y.qty)<0})){t.dataset.armed='';t.textContent='Stock already sold';return}}
+  if(cur=='stock'&&[...db.sales,...db.purchases].some(x=>x.lines.some(l=>l.item==id))){t.dataset.armed='';t.textContent='Has transactions';return}
+  db[cur]=db[cur].filter(x=>x.id!=id)}
+ else if(t.dataset.act=='reset')db=blank();
+ save();render()});
+document.addEventListener('keydown',ev=>{if(ev.key=='Enter'&&ev.target.dataset&&(ev.target.dataset.p||ev.target.dataset.q))ev.target.click()});
+document.addEventListener('submit',ev=>{ev.preventDefault();const f=ev.target,fd=new FormData(f);
+ if(f.id=='sf'){db.co={name:fd.get('name'),cur:fd.get('cur'),trn:fd.get('trn')};save();return render()}
+ const k=f.dataset.k,id=f.dataset.id,m=M[k],v={};m.f.forEach(([key,,t])=>{if(t=='lines'){v.lines=[...f.querySelectorAll('[data-pick]:checked')].map(c=>({item:c.dataset.pick,qty:+fd.get('q_'+c.dataset.pick),price:+fd.get('p_'+c.dataset.pick)}));return}const x=fd.get(key);v[key]=t=='number'&&x!==''&&x!==null?+x:(x||'')});
+ const r=m.mk(v,id);if(typeof r=='string')return $('#err').textContent=r;
+ if(id)db[k]=db[k].map(x=>x.id==id?{id,...r}:x);else db[k].push({id:uid(),...r});save();$('#ov').innerHTML='';render()});
+document.addEventListener('change',ev=>{const pk=ev.target.dataset&&ev.target.dataset.pick;if(pk){const ln=ev.target.closest('.ln'),on=ev.target.checked;ln.classList.toggle('on',on);ln.querySelector('.g2').hidden=!on;ln.querySelectorAll('.g2 input').forEach(x=>{x.disabled=!on;x.required=on});if(on)ln.querySelector('input[name^=q_]').focus();return}if(ev.target.id!='imp')return;const fl=ev.target.files[0];if(!fl)return;const rd=new FileReader();
+ rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.co||!d.sales)throw 0;db={...blank(),...d,v:0};mig();save();render()}catch(_){alert('That file is not a valid Ledger backup.')}};rd.readAsText(fl)});
+render();
+</script>
+</body>
+</html>
